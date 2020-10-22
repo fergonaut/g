@@ -1,33 +1,29 @@
 #include "base/gerr.h"
 #include "gip.h"
+#include <cstdlib> // for atoi
 
 // ----------------------------------------------------------------------------
 // GIp
 // ----------------------------------------------------------------------------
 GIp::GIp(const QString& rhs) {
 	std::string s = rhs.toStdString();
-	char* p = pchar(s.c_str());
-	int res = inet_pton(AF_INET, p, &ip_);
-	switch (res) {
-		case 0:
-			qWarning() << "inet_pton return zero ip=" << rhs;
-			break;
-		case 1: // succeed
-			ip_ = ntohl(ip_);
-			break;
-		default:
-			qWarning() << "inet_pton return " << res << " " << GLastErr();
+	pbyte p = pbyte(&ip_);
+	int res = sscanf(s.c_str(), "%hhu.%hhu.%hhu.%hhu", &p[0], &p[1], &p[2], &p[3]);
+	if (res != SIZE) {
+		qWarning() << QString("sscanf(%1) return %2").arg(rhs).arg(res);
+		ip_ = 0;
+		return;
 	}
+	ip_ = ntohl(ip_);
 }
 
 GIp::operator QString() const {
-	uint32_t ip = htonl(ip_);
 	char s[INET_ADDRSTRLEN];
-	const char* res = inet_ntop(AF_INET, &ip, s, INET_ADDRSTRLEN);
-	if (res == nullptr) {
-		qWarning() << "inet_ntop return null " << GLastErr();
-		return QString();
-	}
+	sprintf(s, "%d.%d.%d.%d",
+		(ip_ & 0xFF000000) >> 24,
+		(ip_ & 0x00FF0000) >> 16,
+		(ip_ & 0x0000FF00) >> 8,
+		(ip_ & 0x000000FF) >> 0);
 	return QString(s);
 }
 

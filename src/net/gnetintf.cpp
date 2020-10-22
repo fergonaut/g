@@ -68,7 +68,7 @@ GNetIntfs::GNetIntfs() {
 
 	int i = pcap_findalldevs(&allDevs_, errBuf);
 	if (i != 0) { // if error occured
-		qWarning() << QString("error in pcap_findalldevs_ex (%s)").arg(errBuf);
+		qWarning() << QString("error in pcap_findalldevs_ex (%1)").arg(errBuf);
 		return;
 	}
 
@@ -107,9 +107,9 @@ GNetIntfs::GNetIntfs() {
 			intf.desc_ = adapter->Description;
 			if (adapter->AddressLength == GMac::SIZE)
 				intf.mac_ = adapter->Address;
-			intf.ip_ = adapter->IpAddressList.IpAddress.String;
-			intf.mask_ = adapter->IpAddressList.IpMask.String;
-			intf.gateway_ = adapter->GatewayList.IpAddress.String;
+			intf.ip_ = QString(adapter->IpAddressList.IpAddress.String);
+			intf.mask_ = QString(adapter->IpAddressList.IpMask.String);
+			intf.gateway_ = QString(adapter->GatewayList.IpAddress.String);
 		}
 #endif
 		intf.ip_and_mask_ = intf.ip_ & intf.mask_;
