@@ -30,7 +30,7 @@ GMac GMac::randomMac() {
 	return res;
 }
 
-GMac& GMac::cleanMac() {
+GMac& GMac::nullMac() {
 	static gbyte _value[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 	static GMac res(_value);
 	return res;
@@ -67,7 +67,7 @@ TEST(GMac, ctorTest) {
 TEST(GMac, castingTest) {
 	GMac mac("001122-334455");
 
-	const gbyte* uc = mac; // operator gbyte*()
+	const gbyte* uc = (gbyte*)mac; // operator gbyte*()
 	gbyte temp[GMac::SIZE];
 	for (int i = 0; i < GMac::SIZE; i++)
 		temp[i] = *uc++;
@@ -81,13 +81,37 @@ TEST(GMac, funcTest) {
 	GMac mac;
 
 	mac.clear();
-	EXPECT_TRUE(mac.isClean());
+	EXPECT_TRUE(mac.isNull());
 
 	mac = QString("FF:FF:FF:FF:FF:FF");
 	EXPECT_TRUE(mac.isBroadcast());
 
 	mac = QString("01:00:5E:00:11:22");
 	EXPECT_TRUE(mac.isMulticast());
+}
+
+#include <map>
+TEST(GMac, mapTest) {
+	typedef std::map<GMac, int> MacMap;
+	MacMap m;
+	m.insert(std::make_pair(GMac("001122-334455"), 1));
+	m.insert(std::make_pair(GMac("001122-334456"), 2));
+	m.insert(std::make_pair(GMac("001122-334457"), 3));
+	EXPECT_EQ(m.size(), 3);
+	MacMap::iterator it = m.begin();
+	EXPECT_EQ(it->second, 1); it++;
+	EXPECT_EQ(it->second, 2); it++;
+	EXPECT_EQ(it->second, 3);
+}
+
+#include <unordered_map>
+TEST(GMac, unordered_mapTest) {
+	typedef std::unordered_map<GMac, int> MacUnorderedMap;
+	MacUnorderedMap m;
+	m.insert(std::make_pair(GMac("001122-334455"), 1));
+	m.insert(std::make_pair(GMac("001122-334456"), 2));
+	m.insert(std::make_pair(GMac("001122-334457"), 3));
+	//EXPECT_EQ(m.size(), 3);
 }
 
 #endif // GTEST

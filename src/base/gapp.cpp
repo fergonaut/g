@@ -1,11 +1,9 @@
 #include "gapp.h"
+#include <QFile>
 #include "base/graph/ggraphwidget.h"
-#include "net/gnetintf.h"
-#include "net/grtm.h"
 #include "base/log/glogmanager.h"
 #include "base/log/glogdbwin32.h"
-#include "base/log/glogfile.h"
-#include "base/log/glogstdout.h"
+#include "base/log/glogstderr.h"
 
 // ----------------------------------------------------------------------------
 // GApp
@@ -20,13 +18,18 @@ GApp::GApp(int &argc, char** argv) : QCoreApplication(argc, argv) {
 
 void GApp::init() {
 	GLogManager& logManager = GLogManager::instance();
+	if (QFile::exists("sslog.ss")) {
+		QJsonObject jo = GJson::loadFromFile("sslog.ss");
+		QJsonArray ja = jo["logs"].toArray();
+		logManager.load(ja);
+	} else {
 #ifdef Q_OS_WIN
-	logManager.logs_.push_back(new GLogDbWin32);
+	logManager.push_back(new GLogDbWin32);
 #endif // Q_OS_WIN
-	logManager.logs_.push_back(new GLogFile);
-
-	GNetIntf::all().init();
-	GRtm::instance().init();
+#ifdef Q_OS_LINUX
+	logManager.push_back(new GLogStderr);
+#endif // Q_OS_LINUX
+	}
 }
 
 #ifdef QT_GUI_LIB
@@ -34,14 +37,14 @@ bool GApp::execObj(GObj* obj) {
 	GPropWidget propWidget(obj);
 
 	QJsonObject jo = GJson::loadFromFile();
-	jo["obj"] >> *obj;
+	jo["object"] >> *obj;
 	jo["propWidget"] >> propWidget;
 
 	propWidget.update();
 	propWidget.show();
 	int res = QApplication::exec();
 
-	jo["obj"] << *obj;
+	jo["object"] << *obj;
 	jo["propWidget"] << propWidget;
 
 	GJson::saveToFile(jo);
