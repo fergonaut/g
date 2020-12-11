@@ -47,6 +47,12 @@ bool GPcapDevice::doClose() {
 	return GPcap::doClose();
 }
 
+GPacket::Result GPcapDevice::read(GPacket* packet) {
+	GPacket::Result res = GPcap::read(packet);
+	if (res == GPacket::TimeOut) QThread::msleep(waitTimeout_);
+	return res;
+}
+
 #ifdef QT_GUI_LIB
 
 #include "base/prop/gpropitem-device.h"
